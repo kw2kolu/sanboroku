@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="参謀録">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#18150f">
+  <title>参謀録</title>
+  <style>
+    :root {
+      --bg:#18150f; --surface:#211d15; --surface-hi:#2d2820;
+      --border:#38322a; --text:#e2d9c4; --text-sub:#8a7e68;
+      --text-mute:#4a4030; --accent:#c4936a; --gold:#b89850;
+      --gold-bg:#1e1908; --success:#6a9870;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html,body{
+      height:100%; background:var(--bg); color:var(--text);
+      font-family:'Hiragino Mincho ProN','Hiragino Mincho Pro','Noto Serif JP','Yu Mincho','YuMincho',Georgia,serif;
+      font-size:15px; line-height:1.7; -webkit-text-size-adjust:100%;
+    }
+    #app{max-width:660px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+
+    /* Header */
+    header{
+      padding:env(safe-area-inset-top,0) 0 0;
+      border-bottom:1px solid var(--border);
+      background:var(--bg);
+      position:sticky;top:0;z-index:10;
+    }
+    .header-inner{padding:18px 20px 0;}
+    .header-eyebrow{
+      font-size:10px;letter-spacing:3px;color:var(--accent);
+      text-transform:uppercase;font-style:italic;margin-bottom:4px;
+    }
+    .header-title{
+      font-size:21px;font-weight:600;letter-spacing:.05em;
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+    }
+    .info-btn{
+      background:none;border:1px solid var(--border);border-radius:50%;
+      width:28px;height:28px;color:var(--text-mute);font-size:13px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+    }
+
+    /* Tabs */
+    .tabs{display:flex;gap:24px;padding:0 20px;}
+    .tab{
+      background:none;border:none;border-bottom:2px solid transparent;
+      padding:0 0 12px;font-size:14px;color:var(--text-mute);cursor:pointer;
+      font-family:inherit;letter-spacing:.02em;transition:color .2s,border-color .2s;
+    }
+    .tab.active{color:var(--text);border-bottom-color:var(--accent);}
+
+    /* Main */
+    main{flex:1;padding:24px 20px 100px;}
+    .pane{display:none;}
+    .pane.active{display:block;}
+
+    /* Form */
+    .date-row{margin-bottom:22px;}
+    input[type="date"]{
+      background:var(--surface);border:1px solid var(--border);border-radius:7px;
+      color:var(--text);padding:9px 14px;font-size:14px;font-family:inherit;
+      color-scheme:dark;cursor:pointer;
+    }
+    .field-group{margin-bottom:22px;}
+    .field-header{
+      display:flex;justify-content:space-between;align-items:baseline;
+      gap:10px;margin-bottom:8px;
+    }
+    .field-label{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;}
+    .field-label.gold{color:var(--gold);}
+    .field-icon{color:var(--accent);margin-right:4px;}
+    .field-icon.gold{color:var(--gold);}
+    .field-hint{font-size:11px;color:var(--text-sub);text-align:right;line-height:1.4;flex-shrink:0;}
+    textarea{
+      width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+      color:var(--text);padding:12px 14px;font-size:14px;font-family:inherit;
+      line-height:1.8;resize:vertical;min-height:76px;
+      transition:border-color .2s,background .2s;-webkit-appearance:none;
+    }
+    textarea:focus{outline:none;border-color:var(--accent);background:var(--surface-hi);}
+    .field-group.gold textarea{background:var(--gold-bg);}
+    .field-group.gold textarea:focus{border-color:var(--gold);background:#221b06;}
+
+    /* Save button */
+    .save-btn{
+      width:100%;padding:14px;background:var(--accent);border:none;border-radius:9px;
+      color:#18150f;font-size:15px;font-weight:600;font-family:inherit;
+      letter-spacing:.05em;cursor:pointer;transition:background .3s,transform .1s;margin-top:4px;
+    }
+    .save-btn:active{transform:scale(.99);}
+    .save-btn.done{background:var(--success);}
+
+    /* History toolbar */
+    .h-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+    .count-lbl{font-size:12px;color:var(--text-sub);}
+    .copy-btn{
+      background:none;border:1px solid var(--border);border-radius:6px;
+      color:var(--text-sub);padding:7px 14px;font-size:12px;cursor:pointer;
+      font-family:inherit;transition:color .2s,border-color .2s;
+    }
+    .copy-btn.done{color:var(--success);border-color:var(--success);}
+
+    /* Entry cards */
+    details.card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;margin-bottom:12px;overflow:hidden;
+    }
+    details.card summary{
+      display:flex;align-items:flex-start;justify-content:space-between;
+      padding:14px 18px;cursor:pointer;list-style:none;gap:12px;user-select:none;
+    }
+    details.card summary::-webkit-details-marker{display:none;}
+    .e-date{font-size:14px;font-weight:500;display:block;}
+    .e-preview{
+      font-size:12px;color:var(--text-sub);display:block;margin-top:3px;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;
+    }
+    .e-preview.gold{color:var(--gold);font-style:italic;}
+    .chevron{
+      color:var(--accent);font-size:14px;flex-shrink:0;margin-top:2px;
+      transition:transform .2s;display:inline-block;
+    }
+    details.card[open] .chevron{transform:rotate(180deg);}
+    .e-body{padding:0 18px 18px;border-top:1px solid var(--border);}
+    .e-field{margin-top:16px;}
+    .e-field.gold{
+      background:var(--gold-bg);border:1px solid rgba(184,152,80,.25);
+      border-radius:8px;padding:12px 14px;
+    }
+    .e-flabel{font-size:11px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px;}
+    .e-field.gold .e-flabel{color:var(--gold);}
+    .e-ftext{font-size:14px;color:var(--text);line-height:1.85;white-space:pre-wrap;word-break:break-word;}
+    .e-footer{margin-top:18px;display:flex;justify-content:flex-end;}
+    .del-btn{
+      background:none;border:1px solid var(--border);border-radius:6px;
+      color:var(--text-mute);padding:6px 14px;font-size:12px;
+      cursor:pointer;font-family:inherit;
+    }
+
+    /* Empty state */
+    .empty{text-align:center;padding:60px 0;color:var(--text-mute);line-height:2;}
+    .empty .ico{font-size:32px;opacity:.2;margin-bottom:12px;}
+
+    /* Modal */
+    .overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+      z-index:100;align-items:flex-end;
+    }
+    .overlay.open{display:flex;}
+    .sheet{
+      background:var(--surface);border-radius:16px 16px 0 0;
+      padding:28px 24px calc(28px + env(safe-area-inset-bottom,0));
+      width:100%;max-width:660px;margin:0 auto;
+    }
+    .sheet-title{font-size:16px;font-weight:600;margin-bottom:20px;color:var(--text);}
+    .platform{margin-bottom:18px;}
+    .platform-name{font-size:13px;font-weight:500;color:var(--accent);margin-bottom:8px;}
+    .steps{font-size:13px;color:var(--text-sub);line-height:2.1;padding-left:18px;}
+    .note{
+      font-size:12px;color:var(--text-mute);margin-top:16px;
+      padding-top:16px;border-top:1px solid var(--border);line-height:1.7;
+    }
+    .sheet-close{
+      width:100%;padding:13px;background:var(--surface-hi);border:none;
+      border-radius:9px;color:var(--text);font-size:15px;font-family:inherit;
+      cursor:pointer;margin-top:20px;
+    }
+
+    /* Animations */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+    .au{animation:fadeUp .3s ease both;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-thumb{background:#3a3326;border-radius:3px;}
+  </style>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='20' fill='%23110f0b'/%3E%3Crect x='10' y='10' width='160' height='160' rx='14' fill='none' stroke='%23b89850' stroke-width='3'/%3E%3Cpath d='M22 22h18M22 22v18M158 22h-18M158 22v18M22 158h18M22 158v-18M158 158h-18M158 158v-18' stroke='%23b89850' stroke-width='2' fill='none'/%3E%3Ctext x='90' y='55' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E参%3C/text%3E%3Ctext x='90' y='95' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E謀%3C/text%3E%3Ctext x='90' y='135' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E録%3C/text%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='20' fill='%23110f0b'/%3E%3Crect x='10' y='10' width='160' height='160' rx='14' fill='none' stroke='%23b89850' stroke-width='3'/%3E%3Cpath d='M22 22h18M22 22v18M158 22h-18M158 22v18M22 158h18M22 158v-18M158 158h-18M158 158v-18' stroke='%23b89850' stroke-width='2' fill='none'/%3E%3Ctext x='90' y='55' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E参%3C/text%3E%3Ctext x='90' y='95' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E謀%3C/text%3E%3Ctext x='90' y='135' text-anchor='middle' fill='%23d4b26a' font-size='34' font-family='serif'%3E録%3C/text%3E%3C/svg%3E">
+
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-inner">
+      <div class="header-eyebrow">Executive Communications Log</div>
+      <div class="header-title">
+        <span>参謀録</span>
+        <button class="info-btn" onclick="openModal()" title="ホーム画面への追加方法">?</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-new"     onclick="switchTab('new')">今日の記録</button>
+      <button class="tab"        id="tab-history" onclick="switchTab('history')">記録一覧</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- NEW ENTRY -->
+    <div class="pane active" id="pane-new">
+      <div class="date-row">
+        <input type="date" id="date-input">
+      </div>
+
+      <div class="field-group">
+        <div class="field-header">
+          <span class="field-label"><span class="field-icon">→</span>自分の動き</span>
+          <span class="field-hint">何を提案・判断・実行したか</span>
+        </div>
+        <textarea id="f-move" rows="3" placeholder="例：社長の台本3箇所に構造的な問題を指摘し、冒頭を再構成することを提案した。"></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-header">
+          <span class="field-label"><span class="field-icon">✎</span>赤字の型</span>
+          <span class="field-hint">どこを直され、なぜか</span>
+        </div>
+        <textarea id="f-redpen" rows="3" placeholder="例：数字のあとに文脈説明を追加するよう修正。「読者は前提を知らない」という理由。"></textarea>
+      </div>
+
+      <div class="field-group">
+        <div class="field-header">
+          <span class="field-label"><span class="field-icon">◎</span>成果・数字</span>
+          <span class="field-hint">出た成果、反応、数字（あれば）</span>
+        </div>
+        <textarea id="f-result" rows="3" placeholder="例：先週の記事のLLMO被引用+3件。社長から「これでいい」が2回。"></textarea>
+      </div>
+
+      <div class="field-group gold">
+        <div class="field-header">
+          <span class="field-label gold"><span class="field-icon gold">✦</span>汎用ルール</span>
+          <span class="field-hint">次の現場でも使える原則</span>
+        </div>
+        <textarea id="f-rule" rows="3" placeholder="例：「技術的正確さ」より「知らない人への手紙」として書く。経営者の言語は常に外向き。"></textarea>
+      </div>
+
+      <button class="save-btn" id="save-btn" onclick="saveEntry()">記録を保存する</button>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="pane" id="pane-history">
+      <div class="h-toolbar">
+        <span class="count-lbl" id="count-lbl">0件の記録</span>
+        <button class="copy-btn" id="copy-btn" onclick="copyAll()">全履歴をコピー</button>
+      </div>
+      <div id="history-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="sheet">
+    <div class="sheet-title">ホーム画面への追加方法</div>
+
+    <div class="platform">
+      <div class="platform-name">iPhone / iPad（Safari）</div>
+      <ol class="steps">
+        <li>このファイルを <strong>Safari</strong> で開く</li>
+        <li>画面下の <strong>共有ボタン（□↑）</strong> をタップ</li>
+        <li>「<strong>ホーム画面に追加</strong>」をタップ</li>
+        <li>右上の「<strong>追加</strong>」をタップ</li>
+      </ol>
+    </div>
+
+    <div class="platform">
+      <div class="platform-name">Android（Chrome）</div>
+      <ol class="steps">
+        <li>このファイルを <strong>Chrome</strong> で開く</li>
+        <li>右上の <strong>メニュー（⋮）</strong> をタップ</li>
+        <li>「<strong>ホーム画面に追加</strong>」をタップ</li>
+        <li>「<strong>追加</strong>」をタップ</li>
+      </ol>
+    </div>
+
+    <div class="note">
+      ※ 記録はこのデバイスに保存されます。<br>
+      ※ Safariのキャッシュを「全消去」すると記録が消える場合があります。大切な記録は「全履歴をコピー」でバックアップを。
+    </div>
+
+    <button class="sheet-close" onclick="closeModal()">閉じる</button>
+  </div>
+</div>
+
+<script>
+const KEY = 'sanboroku-v1';
+const FDEFS = [
+  { key:'move',   icon:'→', label:'自分の動き' },
+  { key:'redpen', icon:'✎', label:'赤字の型'   },
+  { key:'result', icon:'◎', label:'成果・数字' },
+  { key:'rule',   icon:'✦', label:'汎用ルール', gold:true },
+];
+let entries = [];
+
+// ── Helpers ──────────────────────────────────────
+const today = () => {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth()+1).padStart(2,'0'), String(d.getDate()).padStart(2,'0')].join('-');
+};
+const fmtDate = s => {
+  const [y,m,d] = s.split('-').map(Number);
+  const w = ['日','月','火','水','木','金','土'][new Date(y,m-1,d).getDay()];
+  return `${y}年${m}月${d}日（${w}）`;
+};
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ── Storage ───────────────────────────────────────
+const load = () => {
+  try { entries = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(_){ entries=[]; }
+};
+const save = () => localStorage.setItem(KEY, JSON.stringify(entries));
+
+// ── Tabs ──────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+  if (name === 'history') renderHistory();
+  updateTabLabel();
+}
+const updateTabLabel = () => {
+  document.getElementById('tab-history').textContent =
+    entries.length > 0 ? `記録一覧（${entries.length}）` : '記録一覧';
+};
+
+// ── Save entry ────────────────────────────────────
+function saveEntry() {
+  const vals = { date: document.getElementById('date-input').value || today() };
+  FDEFS.forEach(f => vals[f.key] = document.getElementById('f-'+f.key).value.trim());
+  if (!FDEFS.some(f => vals[f.key])) return;
+
+  entries.unshift({ id: String(Date.now()), ts: new Date().toISOString(), ...vals });
+  save();
+  FDEFS.forEach(f => document.getElementById('f-'+f.key).value = '');
+  document.getElementById('date-input').value = today();
+  updateTabLabel();
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓　保存しました';
+  btn.classList.add('done');
+  setTimeout(() => { btn.textContent = '記録を保存する'; btn.classList.remove('done'); }, 2200);
+}
+
+// ── History ───────────────────────────────────────
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  document.getElementById('count-lbl').textContent = `${entries.length}件の記録`;
+
+  if (!entries.length) {
+    list.innerHTML = `<div class="empty"><div class="ico">𝄞</div>まだ記録がありません。<br><span style="font-size:13px">打ち合わせのあと、少しずつ残していきましょう。</span></div>`;
+    return;
+  }
+
+  list.innerHTML = entries.map((e,i) => {
+    const prev = e.rule || e.move || '';
+    const prvCls = e.rule ? 'gold' : '';
+    const prvTxt = (e.rule ? '✦ ' : '') + esc(prev.slice(0,42)) + (prev.length>42?'…':'');
+    const fields = FDEFS.filter(f => e[f.key]).map(f =>
+      `<div class="e-field${f.gold?' gold':''}">
+        <div class="e-flabel">${f.icon} ${f.label}</div>
+        <div class="e-ftext">${esc(e[f.key])}</div>
+       </div>`).join('');
+
+    return `<details class="card au" style="animation-delay:${i*40}ms">
+      <summary>
+        <div style="min-width:0;flex:1">
+          <span class="e-date">${fmtDate(e.date)}</span>
+          ${prev ? `<span class="e-preview ${prvCls}">${prvTxt}</span>` : ''}
+        </div>
+        <span class="chevron">▾</span>
+      </summary>
+      <div class="e-body">
+        ${fields}
+        <div class="e-footer">
+          <button class="del-btn" onclick="deleteEntry('${e.id}')">削除</button>
+        </div>
+      </div>
+    </details>`;
+  }).join('');
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  save(); renderHistory(); updateTabLabel();
+}
+
+// ── Copy all ──────────────────────────────────────
+function copyAll() {
+  if (!entries.length) return;
+  const text = entries.map(e =>
+    ['■ '+fmtDate(e.date),
+      e.move   ? '【自分の動き】\n'+e.move   : null,
+      e.redpen ? '【赤字の型】\n'+e.redpen   : null,
+      e.result ? '【成果・数字】\n'+e.result : null,
+      e.rule   ? '【汎用ルール】\n'+e.rule   : null,
+    ].filter(Boolean).join('\n\n')
+  ).join('\n\n────\n\n');
+
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch(_){}
+    document.body.removeChild(ta);
+  };
+
+  (navigator.clipboard ? navigator.clipboard.writeText(text).catch(fallback) : Promise.resolve(fallback()))
+    .then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ コピーしました'; btn.classList.add('done');
+      setTimeout(() => { btn.textContent = '全履歴をコピー'; btn.classList.remove('done'); }, 2200);
+    });
+}
+
+// ── Modal ─────────────────────────────────────────
+const openModal  = () => document.getElementById('modal').classList.add('open');
+const closeModal = () => document.getElementById('modal').classList.remove('open');
+function handleOverlayClick(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+// ── Init ──────────────────────────────────────────
+load();
+document.getElementById('date-input').value = today();
+updateTabLabel();
+</script>
+</body>
+</html>
